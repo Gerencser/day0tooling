@@ -9,30 +9,28 @@ pipeline {
             // Get some code from a GitHub repository
             git 'https://github.com/Gerencser/day0tooling.git'
 
-            // Run Maven on a Unix agent.
-            sh "cd demo; mvn -V -Dmaven.test.failure.ignore=true clean compile package"
+            sh "cd demo; mvn -V -Dmaven.test.skip=true clean compile package"
             }
          }
 
-         post {
-            // If Maven was able to run the tests, even if some of the test
-            // failed, record the test results and archive the jar file.
-            success {
-               junit '**/target/surefire-reports/TEST-*.xml'
-               archiveArtifacts 'demo/target/*.jar'
-            }
-         }
+        //  post {
+        //     // If Maven was able to run the tests, even if some of the test
+        //     // failed, record the test results and archive the jar file.
+        //     success {
+        //       junit '**/target/surefire-reports/TEST-*.xml'
+        //       archiveArtifacts 'demo/target/*.jar'
+        //     }
+        //  }
       }
       stage('CreateEnvironment') {
          steps {
-             withCredentials([string(credentialsId: 'access_key', variable: 'ACCESS_KEY')],[string(credentialsId: 'secret_access_key', variable: 'SECRET_ACCESS_KEY')],[string(credentialsId: 'db_user_pwd', variable: 'DB_USER_PWD')]){
-                         sh "/opt/terraform/terraform terraform apply -var 'key_name=demo' -var 'public_key_path=/c/Users/gabor/.ssh/aws.pub' -var 'accesskey=$ACCESS_KEY' -var 'secretaccesskey=$SECRET_ACCESS_KEY' -var 'db_user_pwd=DB_USER_PWD' -auto-approve"
+             withCredentials([string(credentialsId: 'access_key', variable: 'ACCESS_KEY'),string(credentialsId: 'secret_access_key', variable: 'SECRET_ACCESS_KEY'),string(credentialsId: 'db_user_pwd', variable: 'DB_USER_PWD')]) {
+               sh "eval \$(ssh-agent -s); ssh-add /home/tomcat/.ssh/aws;"
+               sh "cd demo/environment; /opt/terraform/terraform init"
+               sh "cd demo/environment; /opt/terraform/terraform destroy -var 'key_name=demo' -var 'public_key_path=/home/tomcat/.ssh/aws.pub' -var 'accesskey=$ACCESS_KEY' -var 'secretaccesskey=$SECRET_ACCESS_KEY' -var 'db_user_pwd=DB_USER_PWD' -auto-approve"
+               sh "cd demo/environment; /opt/terraform/terraform apply -var 'key_name=demo' -var 'public_key_path=/home/tomcat/.ssh/aws.pub' -var 'accesskey=$ACCESS_KEY' -var 'secretaccesskey=$SECRET_ACCESS_KEY' -var 'db_user_pwd=DB_USER_PWD' -auto-approve"
             }
          }
-
-         post {
-                sh "echo 'Platform tests'"
-            }
       }
    }
 }

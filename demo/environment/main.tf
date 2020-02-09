@@ -172,13 +172,21 @@ resource "aws_instance" "application" {
   subnet_id = "${aws_subnet.default.id}"
   private_ip = "10.0.1.100"
 
-  # We run a remote provisioner on the instance after creating it.
-  # In this case, we just install nginx and start it. By default,
-  # this should be on port 80
+  provisioner "file" {
+    source      = "/home/tomcat/openjdk-11.0.2_linux-x64_bin.tar.gz"
+    destination = "/home/ec2_user/openjdk-11.0.2_linux-x64_bin.tar.gz"
+  }
+
+  provisioner "file" {
+    source      = "demo/target/demo-0.0.1-SNAPSHOT.jar"
+    destination = "/home/ec2_user/demo-0.0.1-SNAPSHOT.jar"
+  }
+
   provisioner "remote-exec" {
     inline = [
-      "sudo apt-get -y update",
-      "sudo apt install openjdk-11-jdk",
+      "sudo mkdir /opt/java",
+      "sudo cd /opt/java;sudo tar -xvf /home/ec2_user/openjdk-11.0.2_linux-x64_bin.tar.gz",
+      "sudo cd /home/ec2_user; /opt/java/openjdk-11.0.2/bin/java -jar demo-0.0.1-SNAPSHOT.jar"
     ]
   }
 }
