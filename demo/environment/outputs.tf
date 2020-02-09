@@ -3,7 +3,7 @@ output "address" {
 }
 
 output "application_address" {
-  value = aws_instance.application.private_ip
+  value = aws_instance.application.public_ip
 }
 
 output "db_address" {

@@ -171,24 +171,6 @@ resource "aws_instance" "application" {
   # backend instances.
   subnet_id = "${aws_subnet.default.id}"
   private_ip = "10.0.1.100"
-
-  provisioner "file" {
-    source      = "/home/tomcat/openjdk-11.0.2_linux-x64_bin.tar.gz"
-    destination = "/home/ec2_user/openjdk-11.0.2_linux-x64_bin.tar.gz"
-  }
-
-  provisioner "file" {
-    source      = "demo/target/demo-0.0.1-SNAPSHOT.jar"
-    destination = "/home/ec2_user/demo-0.0.1-SNAPSHOT.jar"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo mkdir /opt/java",
-      "sudo cd /opt/java;sudo tar -xvf /home/ec2_user/openjdk-11.0.2_linux-x64_bin.tar.gz",
-      "sudo cd /home/ec2_user; /opt/java/openjdk-11.0.2/bin/java -jar demo-0.0.1-SNAPSHOT.jar"
-    ]
-  }
 }
 
 resource "aws_db_instance" "default" {
