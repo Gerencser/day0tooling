@@ -8,7 +8,7 @@ Terraform: one terraform binary
 generate ssh private/public key
 
 
-
+Only master barnch was usedin git.
 
 Proper AWS user and group security
 

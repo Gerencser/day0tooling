@@ -13,6 +13,16 @@ target/
 .springBeans
 .sts4-cache
 
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+
 ### IntelliJ IDEA ###
 .idea
 *.iws
@@ -29,3 +39,5 @@ build/
 
 ### VS Code ###
 .vscode/
+
+
