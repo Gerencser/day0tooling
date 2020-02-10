@@ -12,5 +12,8 @@ Only master barnch was usedin git.
 
 Proper AWS user and group security
 
+AMI id is hard coded
+
+
 
 

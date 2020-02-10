@@ -55,8 +55,8 @@ resource "aws_security_group" "elb" {
 # Our default security group to access
 # the instances over SSH and HTTP
 resource "aws_security_group" "default" {
-  name        = "terraform_example"
-  description = "Used in the terraform"
+  name        = "application"
+  description = "Used for application network"
   vpc_id      = "${aws_vpc.default.id}"
 
   # SSH access from anywhere
@@ -65,6 +65,13 @@ resource "aws_security_group" "default" {
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 0
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/16"]
   }
 
   # HTTP access from the VPC
@@ -84,12 +91,12 @@ resource "aws_security_group" "default" {
   }
 }
 
-resource "aws_elb" "web" {
+resource "aws_elb" "demo" {
   name = "terraform-example-elb"
 
   subnets         = ["${aws_subnet.default.id}"]
   security_groups = ["${aws_security_group.elb.id}"]
-  instances       = ["${aws_instance.web.id}"]
+  instances       = ["${aws_instance.application.id}"]
 
   listener {
     instance_port     = 80
@@ -104,7 +111,7 @@ resource "aws_key_pair" "auth" {
   public_key = "${file(var.public_key_path)}"
 }
 
-resource "aws_instance" "web" {
+resource "aws_instance" "application" {
   # The connection block tells our provisioner how to
   # communicate with the resource (instance)
   connection {
@@ -118,47 +125,7 @@ resource "aws_instance" "web" {
 
   # Lookup the correct AMI based on the region
   # we specified
-  ami = "${lookup(var.aws_amis, var.aws_region)}"
-
-  # The name of our SSH keypair we created above.
-  key_name = "${aws_key_pair.auth.id}"
-
-  # Our Security group to allow HTTP and SSH access
-  vpc_security_group_ids = ["${aws_security_group.default.id}"]
-
-  # We're going to launch into the same subnet as our ELB. In a production
-  # environment it's more common to have a separate private subnet for
-  # backend instances.
-  subnet_id = "${aws_subnet.default.id}"
-  private_ip = "10.0.1.50"
-
-  # We run a remote provisioner on the instance after creating it.
-  # In this case, we just install nginx and start it. By default,
-  # this should be on port 80
-  provisioner "remote-exec" {
-    inline = [
-      "sudo apt-get -y update",
-      "sudo apt-get -y install nginx",
-      "sudo service nginx start",
-    ]
-  }
-}
-
-resource "aws_instance" "application" {
-  # The connection block tells our provisioner how to
-  # communicate with the resource (instance)
-  connection {
-    # The default username for our AMI
-    user = "ec2-user"
-    host = "${self.public_ip}"
-    # The connection will use the local SSH agent for authentication.
-  }
-
-  instance_type = "t2.micro"
-
-  # Lookup the correct AMI based on the region
-  # we specified
-  ami = "ami-071f4ce599deff521"
+  ami = "ami-0b3fed455ce6b3d9a"
 
   # The name of our SSH keypair we created above.
   key_name = "${aws_key_pair.auth.id}"
@@ -171,6 +138,26 @@ resource "aws_instance" "application" {
   # backend instances.
   subnet_id = "${aws_subnet.default.id}"
   private_ip = "10.0.1.100"
+
+  provisioner "file" {
+    source      = "../target/demo-0.0.1-SNAPSHOT.jar"
+    destination = "/home/ubuntu/demo.jar"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "nohup java -jar /home/ubuntu/demo.jar &",
+    ]
+  }
+}
+
+data "aws_subnet_ids" "all" {
+  vpc_id = aws_vpc.default.id
+}
+
+resource "aws_db_subnet_group" "db_subnets" {
+  name_prefix = "my_db_subnet_group"
+  subnet_ids  = [data.aws_subnet_ids.all.ids]
 }
 
 resource "aws_db_instance" "default" {
@@ -183,7 +170,13 @@ resource "aws_db_instance" "default" {
   instance_class = "db.t2.micro"
   name = "mariadb"
   username = "demo_user"
-  password = "${var.db_user_pwd}"
+  password = var.db_user_pwd
   parameter_group_name = "default.mariadb10.2"
+  db_subnet_group_name = aws_db_subnet_group.db_subnets.id
+  vpc_security_group_ids = [
+    aws_security_group.default.id
+  ]
+  skip_final_snapshot = true
+  publicly_accessible = true
 }
 
