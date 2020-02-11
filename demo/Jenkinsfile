@@ -38,7 +38,7 @@ pipeline {
                         cd demo/environment;
                         echo ${DB_USER_PWD}
                         /opt/terraform/terraform init;
-                        /opt/terraform/terraform refresh -var 'key_name=demo' -var 'public_key_path=/home/tomcat/.ssh/aws.pub' -var "accesskey=\$ACCESS_KEY" -var "secretaccesskey=\$SECRET_ACCESS_KEY" -var "db_user_pwd=\$DB_USER_PWD"
+                        #/opt/terraform/terraform refresh -var 'key_name=demo' -var 'public_key_path=/home/tomcat/.ssh/aws.pub' -var "accesskey=\$ACCESS_KEY" -var "secretaccesskey=\$SECRET_ACCESS_KEY" -var "db_user_pwd=\$DB_USER_PWD"
                         /opt/terraform/terraform apply -var 'key_name=demo' -var 'public_key_path=/home/tomcat/.ssh/aws.pub' -var "accesskey=\$ACCESS_KEY" -var "secretaccesskey=\$SECRET_ACCESS_KEY" -var "db_user_pwd=\$DB_USER_PWD" -auto-approve
                     '''
                }
@@ -54,15 +54,16 @@ pipeline {
                     ]
                 ) {
                 sh '''
+                    eval \$(ssh-agent -s);
+                    ssh-add /home/tomcat/.ssh/aws;
                     cd demo/environment;
                     APPLICATION_HOST=$(/opt/terraform/terraform output application_address);
                     DATABASE_HOST=$(/opt/terraform/terraform output database_address);
                     DB_URL=jdbc:mysql://10.0.1.200:3306/demodb;
-                    eval \$(ssh-agent -s);
-                    ssh-add /home/tomcat/.ssh/aws;
                     cd ../target;
+                    ssh ubuntu@\$APPLICATION_HOST "sudo pkill -f 'java -jar'"
                     scp demo-0.0.1-SNAPSHOT.jar ubuntu@\$APPLICATION_HOST:/home/ubuntu/demo.jar
-                    ssh ubuntu@\$APPLICATION_HOST "nohup java -jar /home/ubuntu/demo.jar --spring.datasource.url=\$DB_URL &";
+                    ssh ubuntu@\$APPLICATION_HOST "nohup java -jar /home/ubuntu/demo.jar --spring.datasource.url=\$DB_URL > /dev/null 2>&1 &";
                 '''
                 }
          }

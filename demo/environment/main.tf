@@ -104,16 +104,56 @@ resource "aws_security_group" "demo" {
   }
 }
 
-resource "aws_elb" "demo" {
-  name = "terraform-example-elb"
+resource "aws_elb" "demo1" {
+  name = "DemoApplicationElb1"
 
   subnets         = ["${aws_subnet.demo.id}"]
   security_groups = ["${aws_security_group.elb.id}"]
-  instances       = ["${aws_instance.application.id}"]
+  instances       = [aws_instance.application1.id]
 
-  tags = {
-    Name = "Demo application elb"
+  listener {
+    instance_port     = 8080
+    instance_protocol = "http"
+    lb_port           = 8080
+    lb_protocol       = "http"
   }
+
+  listener {
+    instance_port     = 8080
+    instance_protocol = "http"
+    lb_port           = 80
+    lb_protocol       = "http"
+  }
+}
+
+resource "aws_elb" "demo2" {
+  name = "DemoApplicationElb2"
+
+  subnets         = ["${aws_subnet.demo.id}"]
+  security_groups = ["${aws_security_group.elb.id}"]
+  instances       = [aws_instance.application1.id, aws_instance.application2.id]
+
+  listener {
+    instance_port     = 8080
+    instance_protocol = "http"
+    lb_port           = 8080
+    lb_protocol       = "http"
+  }
+
+  listener {
+    instance_port     = 8080
+    instance_protocol = "http"
+    lb_port           = 80
+    lb_protocol       = "http"
+  }
+}
+
+resource "aws_elb" "demo3" {
+  name = "DemoApplicationElb3"
+
+  subnets         = ["${aws_subnet.demo.id}"]
+  security_groups = ["${aws_security_group.elb.id}"]
+  instances       = [aws_instance.application1.id, aws_instance.application2.id, aws_instance.application3.id]
 
   listener {
     instance_port     = 8080
@@ -135,7 +175,7 @@ resource "aws_key_pair" "auth" {
   public_key = "${file(var.public_key_path)}"
 }
 
-resource "aws_instance" "application" {
+resource "aws_instance" "application1" {
   # The connection block tells our provisioner how to
   # communicate with the resource (instance)
   connection {
@@ -146,7 +186,7 @@ resource "aws_instance" "application" {
   }
 
   tags = {
-    Name = "application"
+    Name = "application1"
   }
 
   instance_type = "t2.micro"
@@ -167,7 +207,77 @@ resource "aws_instance" "application" {
   # environment it's more common to have a separate private subnet for
   # backend instances.
   subnet_id = "${aws_subnet.demo.id}"
-  private_ip = "10.0.1.100"
+  private_ip = "10.0.1.101"
+}
+
+resource "aws_instance" "application2" {
+  # The connection block tells our provisioner how to
+  # communicate with the resource (instance)
+  connection {
+    # The default username for our AMI
+    user = "ubuntu"
+    host = "${self.public_ip}"
+    # The connection will use the local SSH agent for authentication.
+  }
+
+  tags = {
+    Name = "application2"
+  }
+
+  instance_type = "t2.micro"
+
+  availability_zone = "eu-west-1b"
+
+  # Lookup the correct AMI based on the region
+  # we specified
+  ami = "ami-0b3fed455ce6b3d9a"
+
+  # The name of our SSH keypair we created above.
+  key_name = "${aws_key_pair.auth.id}"
+
+  # Our Security group to allow HTTP and SSH access
+  vpc_security_group_ids = ["${aws_security_group.demo.id}"]
+
+  # We're going to launch into the same subnet as our ELB. In a production
+  # environment it's more common to have a separate private subnet for
+  # backend instances.
+  subnet_id = "${aws_subnet.demo.id}"
+  private_ip = "10.0.1.102"
+}
+
+resource "aws_instance" "application3" {
+  # The connection block tells our provisioner how to
+  # communicate with the resource (instance)
+  connection {
+    # The default username for our AMI
+    user = "ubuntu"
+    host = "${self.public_ip}"
+    # The connection will use the local SSH agent for authentication.
+  }
+
+  tags = {
+    Name = "application3"
+  }
+
+  instance_type = "t2.micro"
+
+  availability_zone = "eu-west-1b"
+
+  # Lookup the correct AMI based on the region
+  # we specified
+  ami = "ami-0b3fed455ce6b3d9a"
+
+  # The name of our SSH keypair we created above.
+  key_name = "${aws_key_pair.auth.id}"
+
+  # Our Security group to allow HTTP and SSH access
+  vpc_security_group_ids = ["${aws_security_group.demo.id}"]
+
+  # We're going to launch into the same subnet as our ELB. In a production
+  # environment it's more common to have a separate private subnet for
+  # backend instances.
+  subnet_id = "${aws_subnet.demo.id}"
+  private_ip = "10.0.1.103"
 }
 
 resource "aws_instance" "db" {
