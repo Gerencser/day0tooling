@@ -14,6 +14,10 @@ Proper AWS user and group security
 
 AMI id is hard coded
 
+file provisioner does not detect file change
+thus remote execute cannot be used too
 
+jenkins setup: secrets and their name
+terraform, java, mysql,  plugin list, ssh agent and key
 
 

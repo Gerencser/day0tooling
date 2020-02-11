@@ -30,6 +30,9 @@ public class SaveDateController {
     @GetMapping("/getdate")
     public Date getDate() {
         DateEntity dateEntity = dateRepository.findTopByOrderByIdDesc();
+        if (dateEntity == null) {
+          dateEntity.setDate(new java.util.Date()).setComment("Database is empty at the moment");
+        }
         return new Date().setDate(dateEntity.getDate()).setMessage(dateEntity.getComment());
     }
 
