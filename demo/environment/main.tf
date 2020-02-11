@@ -111,6 +111,10 @@ resource "aws_elb" "demo" {
   security_groups = ["${aws_security_group.elb.id}"]
   instances       = ["${aws_instance.application.id}"]
 
+  tags = {
+    Name = "Demo application elb"
+  }
+
   listener {
     instance_port     = 8080
     instance_protocol = "http"
