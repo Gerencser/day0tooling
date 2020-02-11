@@ -48,7 +48,7 @@ resource "aws_security_group" "elb" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["86.12.0.0/16"]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
@@ -81,7 +81,7 @@ resource "aws_security_group" "demo" {
   }
 
   ingress {
-    from_port   = 0
+    from_port   = 3306
     to_port     = 3306
     protocol    = "tcp"
     cidr_blocks = ["10.0.0.0/16"]
@@ -115,6 +115,13 @@ resource "aws_elb" "demo" {
     instance_port     = 8080
     instance_protocol = "http"
     lb_port           = 8080
+    lb_protocol       = "http"
+  }
+
+  listener {
+    instance_port     = 8080
+    instance_protocol = "http"
+    lb_port           = 80
     lb_protocol       = "http"
   }
 }
