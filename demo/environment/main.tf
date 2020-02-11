@@ -8,6 +8,9 @@ provider "aws" {
 # Create a VPC to launch our instances into
 resource "aws_vpc" "default" {
   cidr_block = "10.0.0.0/16"
+  tags = {
+    Name = "main"
+  }
 }
 
 # Create an internet gateway to give our subnet access to the outside world
@@ -157,7 +160,7 @@ data "aws_subnet_ids" "all" {
 
 resource "aws_db_subnet_group" "db_subnets" {
   name_prefix = "my_db_subnet_group"
-  subnet_ids  = [data.aws_subnet_ids.all.ids]
+  subnet_ids  = data.aws_subnet_ids.all.ids
 }
 
 resource "aws_db_instance" "default" {
