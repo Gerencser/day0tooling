@@ -7,4 +7,6 @@ CREATE TABLE date (
         comment CHAR(150) NOT NULL DEFAULT '0',
         PRIMARY KEY (`id`)
 );
-GRANT ALL PRIVILEGES ON demodb.* TO 'demo_user'@'10.0.1.100' IDENTIFIED BY 'Password12';
+GRANT ALL PRIVILEGES ON demodb.* TO 'demo_user'@'10.0.1.101' IDENTIFIED BY 'Password12';
+GRANT ALL PRIVILEGES ON demodb.* TO 'demo_user'@'10.0.1.102' IDENTIFIED BY 'Password12';
+GRANT ALL PRIVILEGES ON demodb.* TO 'demo_user'@'10.0.1.103' IDENTIFIED BY 'Password12';

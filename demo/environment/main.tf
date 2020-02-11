@@ -189,6 +189,8 @@ resource "aws_instance" "application1" {
     Name = "application1"
   }
 
+  # monitoring = true
+
   instance_type = "t2.micro"
 
   availability_zone = "eu-west-1b"
@@ -224,6 +226,8 @@ resource "aws_instance" "application2" {
     Name = "application2"
   }
 
+  # monitoring = true
+
   instance_type = "t2.micro"
 
   availability_zone = "eu-west-1b"
@@ -258,6 +262,8 @@ resource "aws_instance" "application3" {
   tags = {
     Name = "application3"
   }
+
+  # monitoring = true
 
   instance_type = "t2.micro"
 
