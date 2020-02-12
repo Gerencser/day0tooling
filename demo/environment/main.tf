@@ -189,7 +189,7 @@ resource "aws_instance" "application1" {
     Name = "application1"
   }
 
-  # monitoring = true
+  monitoring = true
 
   instance_type = "t2.micro"
 
