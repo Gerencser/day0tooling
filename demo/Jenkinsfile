@@ -13,14 +13,11 @@ pipeline {
             }
          }
 
-        //  post {
-        //     // If Maven was able to run the tests, even if some of the test
-        //     // failed, record the test results and archive the jar file.
-        //     success {
-        //       junit '**/target/surefire-reports/TEST-*.xml'
-        //       archiveArtifacts 'demo/target/*.jar'
-        //     }
-        //  }
+         post {
+            success {
+              archiveArtifacts 'demo/target/*.jar'
+            }
+         }
       }
       stage('CreateEnvironment') {
          steps {
@@ -61,6 +58,7 @@ pipeline {
                     APPLICATION_HOST2=$(/opt/terraform/terraform output application_address2);
                     APPLICATION_HOST3=$(/opt/terraform/terraform output application_address3);
                     DATABASE_HOST=$(/opt/terraform/terraform output database_address);
+                    ssh ec2-user@\$DATABASE_HOST "sudo mysql -u root --force < database.sql"
                     DB_URL=jdbc:mysql://10.0.1.200:3306/demodb;
                     cd ../target;
                     ssh ubuntu@\$APPLICATION_HOST1 "sudo pkill -f 'java'"
@@ -72,17 +70,18 @@ pipeline {
                     ssh ubuntu@\$APPLICATION_HOST3 "sudo pkill -f 'java'"
                     scp demo-0.0.1-SNAPSHOT.jar ubuntu@\$APPLICATION_HOST3:/home/ubuntu/demo.jar
                     ssh ubuntu@\$APPLICATION_HOST3 "nohup java -jar /home/ubuntu/demo.jar --server.address=10.0.1.103 --spring.datasource.url=\$DB_URL > /dev/null 2>&1 &";
+                    sleep 20s
                 '''
                 }
          }
       }
-      stage('PerformanceTest') {
+      stage('PerformanceTest1') {
          steps {
                 sh '''
                     cd demo/environment;
                     ADDRESS1=$(/opt/terraform/terraform output address1);
                     cd ../performance
-                    /opt/jmeter/bin/jmeter.sh -Jthreads=10000 -Jhostname=\$ADDRESS1 -n -t PerformanceTest.jmx -l result.jtl
+                    /opt/jmeter/bin/jmeter.sh -Jthreads=100 -Jhostname=\$ADDRESS1 -n -t PerformanceTest.jmx -l result1.jtl
                 '''
          }
          post {
@@ -91,6 +90,35 @@ pipeline {
                     }
                  }
        }
-
+       stage('PerformanceTest2') {
+         steps {
+                sh '''
+                    cd demo/environment;
+                    ADDRESS1=$(/opt/terraform/terraform output address2);
+                    cd ../performance
+                    /opt/jmeter/bin/jmeter.sh -Jthreads=100 -Jhostname=\$ADDRESS1 -n -t PerformanceTest.jmx -l result2.jtl
+                '''
+         }
+         post {
+                    success {
+                      archiveArtifacts 'demo/performance/*.*'
+                    }
+                 }
+       }
+       stage('PerformanceTest3') {
+         steps {
+                sh '''
+                    cd demo/environment;
+                    ADDRESS1=$(/opt/terraform/terraform output address3);
+                    cd ../performance
+                    /opt/jmeter/bin/jmeter.sh -Jthreads=100 -Jhostname=\$ADDRESS1 -n -t PerformanceTest.jmx -l result3.jtl
+                '''
+         }
+         post {
+                    success {
+                      archiveArtifacts 'demo/performance/*.*'
+                    }
+                 }
+       }
    }
 }
