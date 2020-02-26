@@ -14,7 +14,7 @@ target/
 .sts4-cache
 
 # Local .terraform directories
-**/.terraform/*
+environment/application/.terraform/*
 
 # .tfstate files
 *.tfstate
